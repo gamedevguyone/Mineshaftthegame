@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Mineshaft</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<style>
+:root{--ink:#ffe9c7;--amber:#f0a53a;--deep:#2b1a10;--rust:#d9772a}
+html,body{overscroll-behavior:none;-webkit-touch-callout:none;margin:0;height:100%;overflow:hidden;background:#1b110a;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:var(--ink);touch-action:none;user-select:none;-webkit-user-select:none}
+#gl{position:fixed;left:0;top:0;display:block;z-index:0}
+button{font:600 15px system-ui,sans-serif;color:#3a1d08;background:linear-gradient(#ffc66b,#e8913a);border:0;border-bottom:3px solid #a85a1c;border-radius:10px;padding:9px 14px;cursor:pointer}
+button:active{transform:translateY(2px);border-bottom-width:1px}
+input{font:16px system-ui,sans-serif;padding:11px;border-radius:10px;border:2px solid #a85a1c;background:#fff4de;color:#3a1d08;text-align:center}
+#menu{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 15%,#a8541c 0,#4a240f 55%,#1b110a 100%);z-index:30;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;display:flex;padding:max(10px,env(safe-area-inset-top)) 10px 14px;box-sizing:border-box}
+#menu .wrap{margin:auto;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:820px}
+#menu h1{margin:0;font-size:clamp(28px,7vw,42px);letter-spacing:2px;text-shadow:0 3px 0 #a85a1c,0 0 24px #ffb84d88}
+#menu .namerow{display:flex;gap:6px;align-items:center}#menu .namerow input{width:200px}
+#menu .cards{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:100%}
+#menu .card{background:#2b1a10d9;border:2px solid #a85a1c;border-radius:14px;padding:12px;width:240px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;text-align:center}
+#menu .card h2{margin:0;font-size:17px;color:#ffd27a}#menu .card p{margin:0;font-size:12px;opacity:.85;line-height:1.35}
+#menu .card button{width:100%}#menu .card input{width:100%;box-sizing:border-box}
+#bnew{display:none;background:#5a3418;color:var(--ink);border-bottom-color:#2b1a10;font-size:13px;padding:6px}
+#menuerr{color:#ffb38a;min-height:18px;margin:0;text-align:center}
+#cross{position:fixed;left:50%;top:50%;width:18px;height:18px;margin:-9px;pointer-events:none;z-index:2}
+#cross:before,#cross:after{content:"";position:absolute;background:#fff;mix-blend-mode:difference}
+#cross:before{left:8px;width:2px;height:18px}#cross:after{top:8px;height:2px;width:18px}
+#bar{position:fixed;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:3px;z-index:3}
+#bar div{position:relative;width:42px;height:42px;border:3px solid #7a4a22;border-radius:8px;box-sizing:border-box;background:#2b1a10b0}
+#bar div.on{border-color:#ffd27a;box-shadow:0 0 10px #ffb84d}
+#bar canvas,.slot canvas{width:100%;height:100%;image-rendering:pixelated;border-radius:5px}
+.cnt{position:absolute;right:2px;bottom:0;font:700 11px sans-serif;color:#fff;text-shadow:0 1px 2px #000}
+#card{position:fixed;top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));background:linear-gradient(#3b2314e6,#2b1a10e6);border:2px solid #a85a1c;border-radius:12px;padding:7px 10px;font-size:13px;z-index:3;min-width:150px;max-width:200px}
+#hpbar{height:9px;background:#0007;border-radius:5px;overflow:hidden;margin-bottom:4px}#hpfill{display:block;height:100%;width:100%;background:linear-gradient(#ff8a5c,#e0403a);transition:width .2s}
+#plist{margin-top:4px;font-size:12px;line-height:1.5;max-height:90px;overflow:hidden}#plist i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+#terr{margin-top:3px;font-size:12px;color:#ffd27a}
+#net{position:fixed;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));background:#2b1a10cc;border:2px solid #a85a1c;border-radius:10px;padding:4px 9px;font-size:12px;z-index:3}
+#msg{position:fixed;top:max(50px,calc(env(safe-area-inset-top) + 42px));left:50%;transform:translateX(-50%);background:#2b1a10e6;border:2px solid #f0a53a;border-radius:10px;padding:6px 12px;font-size:13px;display:none;z-index:6;max-width:80%;text-align:center}
+#hurt{position:fixed;inset:0;background:#f00;opacity:0;pointer-events:none;transition:opacity .3s;z-index:2}
+.panel{touch-action:pan-y;-webkit-overflow-scrolling:touch;position:fixed;inset:6% 8%;background:linear-gradient(#3b2314f2,#24150ef2);border:3px solid #f0a53a;border-radius:16px;z-index:20;display:none;padding:12px;overflow:auto;box-sizing:border-box}
+#pal{flex-wrap:wrap;gap:6px;align-content:flex-start}.slot{position:relative;width:46px;height:46px;border:2px solid #7a4a22;border-radius:8px;cursor:pointer;background:#0004}
+#shop h3,#shop h4,#gmenu h3{margin:4px 0}#shop .cols{display:flex;gap:14px;flex-wrap:wrap}#shop .cols>div{flex:1;min-width:210px}
+#shop button,#gmenu button{display:block;width:100%;margin:4px 0;text-align:left}#shop button.no{opacity:.5}
+#joy{position:fixed;width:100px;height:100px;margin:-50px 0 0 -50px;border:3px solid #ffd27a88;border-radius:50%;display:none;pointer-events:none;z-index:4}
+#knob{position:absolute;left:30px;top:30px;width:40px;height:40px;border-radius:50%;background:#ffd27acc}
+#dia,#sec{display:none}
+.touch #dia{display:block;position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(56px,calc(env(safe-area-inset-bottom) + 50px));width:214px;height:214px;z-index:5}
+.touch #dia button{position:absolute;width:68px;height:68px;border-radius:50%;padding:0;font-size:26px;line-height:1;opacity:.86;border-bottom-width:4px}
+.touch #dia small{display:block;font-size:10px;font-weight:700;margin-top:1px}
+#bu{left:73px;top:0}#ba{right:0;top:73px;width:76px!important;height:76px!important;background:linear-gradient(#ff9b6b,#e0503a);color:#fff;border-bottom-color:#8a2418}#bp{left:73px;bottom:0}#bj{left:0;top:73px}
+.touch #sec{display:flex;position:fixed;top:max(46px,calc(env(safe-area-inset-top) + 40px));right:max(8px,env(safe-area-inset-right));flex-direction:column;gap:7px;z-index:5}
+.touch #sec button{width:46px;height:46px;border-radius:50%;padding:0;font-size:20px;opacity:.85}
+@media (max-height:420px){#bar div{width:36px;height:36px}#card{font-size:11px;min-width:120px;padding:5px 8px}#plist{display:none}.touch #dia{transform:scale(.88);transform-origin:100% 100%}}
+</style></head><body>
+<div id="menu"><div class="wrap"><h1>Mineshaft</h1>
+<div class="namerow"><input id="nm" maxlength="16" placeholder="Your display name"><button id="nmc" class="small" style="padding:8px 10px">Clear</button></div>
+<div class="cards">
+<div class="card"><h2>Public World</h2><p>One shared creative world with everyone online. Build freely.</p><button id="bpub">Play online</button></div>
+<div class="card"><h2>Private Room</h2><p>Friends join with your code. Saved on the server.</p><input id="rc" maxlength="12" placeholder="Room code (3-12 letters/numbers)"><button id="brc">Creative</button><button id="brs">Survival co-op</button></div>
+<div class="card"><h2>Single Player</h2><p>Offline survival saved on this device.</p><button id="bsolo">Start survival</button><button id="bnew">Start a new game</button></div>
+</div><p id="menuerr"></p></div></div>
+<div id="cross"></div><div id="bar"></div><div id="hurt"></div>
+<div id="card"><div id="hpbar"><i id="hpfill"></i></div><div id="hp"></div><div id="terr"></div><div id="plist"></div></div>
+<div id="net"></div><div id="msg"></div><div id="joy"><div id="knob"></div></div>
+<div id="pal" class="panel"></div><div id="shop" class="panel"></div><div id="gmenu" class="panel"></div>
+<div id="dia"><button id="bu">&#10084;<small>USE</small></button><button id="ba">&#9876;<small>HIT</small></button><button id="bp">&#9638;<small>PLACE</small></button><button id="bj">&#8679;<small>JUMP</small></button></div>
+<div id="sec"><button id="bv">&#128065;</button><button id="be">&#127890;</button><button id="bs">&#128722;</button><button id="bm">&#9776;</button></div>
+</body></html>
